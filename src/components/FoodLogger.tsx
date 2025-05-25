@@ -5,63 +5,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { searchFoods, Food } from "@/data/foodDatabase";
-import { Search, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface FoodLoggerProps {
   onAddMeal: (meal: any) => void;
 }
 
 export const FoodLogger = ({ onAddMeal }: FoodLoggerProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-  const [servings, setServings] = useState(1);
+  const [foodName, setFoodName] = useState("");
+  const [portionSize, setPortionSize] = useState(100);
   const [mealType, setMealType] = useState("breakfast");
-  const [searchResults, setSearchResults] = useState<Food[]>([]);
-  const [showResults, setShowResults] = useState(false);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim()) {
-      const results = searchFoods(query);
-      setSearchResults(results);
-      setShowResults(true);
-    } else {
-      setShowResults(false);
-    }
-  };
-
-  const selectFood = (food: Food) => {
-    setSelectedFood(food);
-    setSearchQuery(food.name);
-    setShowResults(false);
-  };
-
-  const calculateNutrition = (food: Food, servings: number) => ({
-    calories: Math.round(food.calories * servings),
-    protein: Math.round(food.protein * servings * 10) / 10,
-    carbs: Math.round(food.carbs * servings * 10) / 10,
-    fats: Math.round(food.fats * servings * 10) / 10,
-  });
+  const [calories, setCalories] = useState(0);
+  const [protein, setProtein] = useState(0);
+  const [carbs, setCarbs] = useState(0);
+  const [fats, setFats] = useState(0);
 
   const handleAddMeal = () => {
-    if (!selectedFood) return;
+    if (!foodName.trim()) return;
 
-    const nutrition = calculateNutrition(selectedFood, servings);
-    
     onAddMeal({
-      foodName: selectedFood.name,
+      foodName: foodName.trim(),
       mealType,
-      servings,
-      servingSize: selectedFood.servingSize,
-      ...nutrition,
+      servings: 1,
+      servingSize: `${portionSize}g`,
+      calories,
+      protein,
+      carbs,
+      fats,
     });
 
     // Reset form
-    setSearchQuery("");
-    setSelectedFood(null);
-    setServings(1);
-    setShowResults(false);
+    setFoodName("");
+    setPortionSize(100);
+    setCalories(0);
+    setProtein(0);
+    setCarbs(0);
+    setFats(0);
   };
 
   return (
@@ -91,76 +70,76 @@ export const FoodLogger = ({ onAddMeal }: FoodLoggerProps) => {
           </div>
 
           <div>
-            <Label htmlFor="servings">Servings</Label>
+            <Label htmlFor="portionSize">Portion Size (grams)</Label>
             <Input
-              id="servings"
+              id="portionSize"
               type="number"
-              min="0.1"
-              step="0.1"
-              value={servings}
-              onChange={(e) => setServings(parseFloat(e.target.value) || 1)}
+              min="1"
+              value={portionSize}
+              onChange={(e) => setPortionSize(parseInt(e.target.value) || 100)}
             />
           </div>
         </div>
 
-        <div className="relative">
-          <Label htmlFor="foodSearch">Search Food</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+        <div>
+          <Label htmlFor="foodName">Food Name</Label>
+          <Input
+            id="foodName"
+            placeholder="Enter food name..."
+            value={foodName}
+            onChange={(e) => setFoodName(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <Label htmlFor="calories">Calories</Label>
             <Input
-              id="foodSearch"
-              placeholder="Search for foods..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
+              id="calories"
+              type="number"
+              min="0"
+              value={calories}
+              onChange={(e) => setCalories(parseInt(e.target.value) || 0)}
             />
           </div>
-          
-          {showResults && searchResults.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-              {searchResults.map((food) => (
-                <button
-                  key={food.id}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                  onClick={() => selectFood(food)}
-                >
-                  <div className="font-medium text-gray-900">{food.name}</div>
-                  <div className="text-sm text-gray-600">
-                    {food.calories} cal per {food.servingSize} • {food.category}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          <div>
+            <Label htmlFor="protein">Protein (g)</Label>
+            <Input
+              id="protein"
+              type="number"
+              min="0"
+              step="0.1"
+              value={protein}
+              onChange={(e) => setProtein(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="carbs">Carbs (g)</Label>
+            <Input
+              id="carbs"
+              type="number"
+              min="0"
+              step="0.1"
+              value={carbs}
+              onChange={(e) => setCarbs(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="fats">Fats (g)</Label>
+            <Input
+              id="fats"
+              type="number"
+              min="0"
+              step="0.1"
+              value={fats}
+              onChange={(e) => setFats(parseFloat(e.target.value) || 0)}
+            />
+          </div>
         </div>
-
-        {selectedFood && (
-          <Card className="p-4 bg-gray-50 border border-gray-200">
-            <h3 className="font-medium text-gray-900 mb-2">{selectedFood.name}</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              <div>
-                <span className="text-gray-600">Calories:</span>
-                <div className="font-medium">{calculateNutrition(selectedFood, servings).calories}</div>
-              </div>
-              <div>
-                <span className="text-gray-600">Protein:</span>
-                <div className="font-medium">{calculateNutrition(selectedFood, servings).protein}g</div>
-              </div>
-              <div>
-                <span className="text-gray-600">Carbs:</span>
-                <div className="font-medium">{calculateNutrition(selectedFood, servings).carbs}g</div>
-              </div>
-              <div>
-                <span className="text-gray-600">Fats:</span>
-                <div className="font-medium">{calculateNutrition(selectedFood, servings).fats}g</div>
-              </div>
-            </div>
-          </Card>
-        )}
 
         <Button 
           onClick={handleAddMeal}
-          disabled={!selectedFood}
+          disabled={!foodName.trim()}
           className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
         >
           Add to Today's Log
