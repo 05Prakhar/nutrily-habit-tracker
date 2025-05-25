@@ -5,10 +5,11 @@ import { FoodLogger } from "@/components/FoodLogger";
 import { MacroRings } from "@/components/MacroRings";
 import { DailyInsights } from "@/components/DailyInsights";
 import { RecentMeals } from "@/components/RecentMeals";
+import { DailyTargets } from "@/components/DailyTargets";
 
 const Index = () => {
   const [todaysMeals, setTodaysMeals] = useState([]);
-  const [dailyGoals] = useState({
+  const [dailyGoals, setDailyGoals] = useState({
     calories: 2000,
     protein: 150,
     carbs: 250,
@@ -22,6 +23,10 @@ const Index = () => {
       timestamp: new Date(),
     };
     setTodaysMeals(prev => [...prev, newMeal]);
+  };
+
+  const updateDailyGoals = (goals) => {
+    setDailyGoals(goals);
   };
 
   const getCurrentTotals = () => {
@@ -57,8 +62,9 @@ const Index = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Food Logger - Takes up 2 columns on large screens */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <FoodLogger onAddMeal={addMeal} />
+            <DailyTargets dailyGoals={dailyGoals} onUpdateGoals={updateDailyGoals} />
           </div>
           
           {/* Sidebar with insights */}
