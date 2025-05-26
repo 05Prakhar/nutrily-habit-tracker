@@ -3,6 +3,7 @@
 ## Project info
 
 **Published Project URL**: https://nutrily-habit-tracker.lovable.app/auth
+
 **Project URL**: https://lovable.dev/projects/4ce997cc-4df4-425b-ad40-79a9036991c0
 
 ## How can I edit this code?
