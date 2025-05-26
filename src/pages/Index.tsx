@@ -6,8 +6,14 @@ import { MacroRings } from "@/components/MacroRings";
 import { DailyInsights } from "@/components/DailyInsights";
 import { RecentMeals } from "@/components/RecentMeals";
 import { DailyTargets } from "@/components/DailyTargets";
+import { ProfileSetup } from "@/components/ProfileSetup";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
+  const { user } = useAuth();
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [todaysMeals, setTodaysMeals] = useState([]);
   const [dailyGoals, setDailyGoals] = useState({
     calories: 2000,
@@ -15,6 +21,40 @@ const Index = () => {
     carbs: 250,
     fats: 65
   });
+
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        // Check if user has daily goals set up
+        const { data: goals, error } = await supabase
+          .from('user_daily_goals')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code === 'PGRST116') {
+          // No goals found, show profile setup
+          setShowProfileSetup(true);
+        } else if (goals) {
+          // User has goals, load them
+          setDailyGoals({
+            calories: goals.calories,
+            protein: goals.protein,
+            carbs: goals.carbs,
+            fats: goals.fats
+          });
+        }
+      } catch (error) {
+        console.error('Error checking user profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUserProfile();
+  }, [user]);
 
   const addMeal = (meal) => {
     const newMeal = {
@@ -37,6 +77,29 @@ const Index = () => {
       fats: totals.fats + meal.fats
     }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
   };
+
+  const handleProfileSetupComplete = () => {
+    setShowProfileSetup(false);
+    // Reload goals after setup
+    window.location.reload();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white font-bold text-xl">N</span>
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showProfileSetup) {
+    return <ProfileSetup onComplete={handleProfileSetupComplete} />;
+  }
 
   const currentTotals = getCurrentTotals();
 
