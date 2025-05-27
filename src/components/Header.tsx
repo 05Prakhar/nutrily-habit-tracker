@@ -2,6 +2,7 @@
 import { Bell, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { FeedbackForm } from "@/components/FeedbackForm";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -24,6 +25,7 @@ export const Header = () => {
           <span className="text-sm text-gray-600 hidden sm:block">
             Welcome, {user?.email}
           </span>
+          <FeedbackForm />
           <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
             <Bell className="w-5 h-5" />
           </Button>
