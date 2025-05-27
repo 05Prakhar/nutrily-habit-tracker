@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, User, Target } from 'lucide-react';
+import { Settings, User, Target, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ProfileSettingsProps {
   dailyGoals: {
@@ -48,8 +49,57 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
 
   const [activeTab, setActiveTab] = useState<'profile' | 'targets'>('profile');
 
+  // Validation states
+  const [validationError, setValidationError] = useState<string>('');
+
   const updateProfileData = (field: string, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Calculate calories from macros
+  const calculateCaloriesFromMacros = (protein: number, carbs: number, fats: number) => {
+    return (protein * 4) + (carbs * 4) + (fats * 9);
+  };
+
+  // Validate macro nutrients against calories
+  const validateMacros = () => {
+    const calculatedCalories = calculateCaloriesFromMacros(targets.protein, targets.carbs, targets.fats);
+    const tolerance = 50; // Allow 50 calorie difference for rounding
+    
+    if (Math.abs(calculatedCalories - targets.calories) > tolerance) {
+      const difference = Math.abs(calculatedCalories - targets.calories);
+      setValidationError(
+        `Macro nutrients don't match calories. Current macros equal ${calculatedCalories} calories, but target is ${targets.calories} calories (difference: ${difference} calories). ` +
+        `Protein: ${targets.protein}g × 4 = ${targets.protein * 4} cal, ` +
+        `Carbs: ${targets.carbs}g × 4 = ${targets.carbs * 4} cal, ` +
+        `Fats: ${targets.fats}g × 9 = ${targets.fats * 9} cal`
+      );
+      return false;
+    }
+    
+    setValidationError('');
+    return true;
+  };
+
+  // Update targets with validation
+  const updateTarget = (field: string, value: number) => {
+    const newTargets = { ...targets, [field]: value };
+    setTargets(newTargets);
+    
+    // Validate after a brief delay to avoid constant validation while typing
+    setTimeout(() => {
+      const calculatedCalories = calculateCaloriesFromMacros(newTargets.protein, newTargets.carbs, newTargets.fats);
+      const tolerance = 50;
+      
+      if (Math.abs(calculatedCalories - newTargets.calories) > tolerance) {
+        const difference = Math.abs(calculatedCalories - newTargets.calories);
+        setValidationError(
+          `Macro nutrients don't match calories. Current macros equal ${calculatedCalories} calories, but target is ${newTargets.calories} calories (difference: ${difference} calories).`
+        );
+      } else {
+        setValidationError('');
+      }
+    }, 500);
   };
 
   const calculateDailyGoals = () => {
@@ -97,6 +147,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
   const handleCalculateTargets = () => {
     const newTargets = calculateDailyGoals();
     setTargets(newTargets);
+    setValidationError(''); // Clear any existing validation errors
     toast({
       title: "Targets calculated!",
       description: "Your daily targets have been updated based on your profile.",
@@ -104,6 +155,16 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
   };
 
   const handleSave = async () => {
+    // Validate macros before saving
+    if (!validateMacros()) {
+      toast({
+        title: "Validation Error",
+        description: "Please adjust your macro nutrients to match your calorie target.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Update daily goals with current timestamp
@@ -285,6 +346,27 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Customize Daily Targets</h3>
               
+              {/* Validation Error Alert */}
+              {validationError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    {validationError}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Macro Calculation Info */}
+              <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                <p className="font-medium mb-1">Calorie Calculation:</p>
+                <p>Protein: {targets.protein}g × 4 cal/g = {targets.protein * 4} calories</p>
+                <p>Carbs: {targets.carbs}g × 4 cal/g = {targets.carbs * 4} calories</p>
+                <p>Fats: {targets.fats}g × 9 cal/g = {targets.fats * 9} calories</p>
+                <p className="font-medium mt-1">
+                  Total from macros: {calculateCaloriesFromMacros(targets.protein, targets.carbs, targets.fats)} calories
+                </p>
+              </div>
+              
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="targetCalories">Calories</Label>
@@ -293,7 +375,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
                     type="number"
                     min="0"
                     value={targets.calories}
-                    onChange={(e) => setTargets(prev => ({ ...prev, calories: parseInt(e.target.value) || 0 }))}
+                    onChange={(e) => updateTarget('calories', parseInt(e.target.value) || 0)}
                   />
                 </div>
                 <div>
@@ -304,7 +386,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
                     min="0"
                     step="0.1"
                     value={targets.protein}
-                    onChange={(e) => setTargets(prev => ({ ...prev, protein: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) => updateTarget('protein', parseFloat(e.target.value) || 0)}
                   />
                 </div>
                 <div>
@@ -315,7 +397,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
                     min="0"
                     step="0.1"
                     value={targets.carbs}
-                    onChange={(e) => setTargets(prev => ({ ...prev, carbs: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) => updateTarget('carbs', parseFloat(e.target.value) || 0)}
                   />
                 </div>
                 <div>
@@ -326,7 +408,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
                     min="0"
                     step="0.1"
                     value={targets.fats}
-                    onChange={(e) => setTargets(prev => ({ ...prev, fats: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) => updateTarget('fats', parseFloat(e.target.value) || 0)}
                   />
                 </div>
               </div>
@@ -340,7 +422,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={loading}
+              disabled={loading || !!validationError}
               className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
             >
               {loading ? 'Saving...' : 'Save Changes'}
