@@ -37,6 +37,11 @@ const App = () => {
                   <Index />
                 </ProtectedRoute>
               } />
+              <Route path="/meal-history" element={
+                <ProtectedRoute>
+                  <MealHistory />
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

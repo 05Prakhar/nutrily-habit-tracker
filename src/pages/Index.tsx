@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { FoodLogger } from "@/components/FoodLogger";
 import { MacroRings } from "@/components/MacroRings";
 import { DailyInsights } from "@/components/DailyInsights";
 import { RecentMeals } from "@/components/RecentMeals";
-import { DailyTargets } from "@/components/DailyTargets";
 import { ProfileSetup } from "@/components/ProfileSetup";
 import { MealHistoryButton } from "@/components/MealHistoryButton";
+import { ProfileSettings } from "@/components/ProfileSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -155,8 +156,9 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center gap-4 mb-4">
             <MealHistoryButton />
+            <ProfileSettings dailyGoals={dailyGoals} onGoalsUpdated={updateDailyGoals} />
           </div>
           
           <MacroRings currentTotals={currentTotals} dailyGoals={dailyGoals} />
@@ -167,7 +169,6 @@ const Index = () => {
           {/* Food Logger - Takes up 2 columns on large screens */}
           <div className="lg:col-span-2 space-y-8">
             <FoodLogger onAddMeal={addMeal} />
-            <DailyTargets dailyGoals={dailyGoals} onUpdateGoals={updateDailyGoals} />
           </div>
           
           {/* Sidebar with insights */}
