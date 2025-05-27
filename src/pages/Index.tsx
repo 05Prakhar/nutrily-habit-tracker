@@ -56,13 +56,49 @@ const Index = () => {
     checkUserProfile();
   }, [user]);
 
-  const addMeal = (meal) => {
-    const newMeal = {
-      ...meal,
-      id: Date.now(),
-      timestamp: new Date(),
+  useEffect(() => {
+    const loadTodaysMeals = async () => {
+      if (!user) return;
+
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: meals, error } = await supabase
+          .from('user_meals')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('meal_date', today)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading meals:', error);
+          return;
+        }
+
+        // Transform database meals to match the expected format
+        const transformedMeals = meals?.map((meal) => ({
+          id: meal.id,
+          foodName: meal.name,
+          mealType: 'meal', // Since we don't store meal type in DB yet, use default
+          servings: 1,
+          servingSize: '100g', // Default serving size
+          calories: meal.calories,
+          protein: meal.protein,
+          carbs: meal.carbs,
+          fats: meal.fats,
+          timestamp: new Date(meal.created_at),
+        })) || [];
+
+        setTodaysMeals(transformedMeals);
+      } catch (error) {
+        console.error('Error loading meals:', error);
+      }
     };
-    setTodaysMeals(prev => [...prev, newMeal]);
+
+    loadTodaysMeals();
+  }, [user]);
+
+  const addMeal = (meal) => {
+    setTodaysMeals(prev => [meal, ...prev]);
   };
 
   const updateDailyGoals = (goals) => {
