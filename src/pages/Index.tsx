@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { FoodLogger } from "@/components/FoodLogger";
@@ -7,6 +6,7 @@ import { DailyInsights } from "@/components/DailyInsights";
 import { RecentMeals } from "@/components/RecentMeals";
 import { DailyTargets } from "@/components/DailyTargets";
 import { ProfileSetup } from "@/components/ProfileSetup";
+import { MealHistoryButton } from "@/components/MealHistoryButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -153,6 +153,10 @@ const Index = () => {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Track your nutrition effortlessly, build healthy habits, and visualize your progress with beautiful insights.
             </p>
+          </div>
+          
+          <div className="flex justify-center mb-4">
+            <MealHistoryButton />
           </div>
           
           <MacroRings currentTotals={currentTotals} dailyGoals={dailyGoals} />
