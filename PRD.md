@@ -1,7 +1,6 @@
 ## 🧭 App Overview & Objectives
 
-**App Name (placeholder):** *Nutrily*
-**Type:** Web App
+**App Name:** *Nutrily*
 **Vision:**
 A clean, minimalist diet tracker that helps users effortlessly log their meals, monitor macro and micronutrients, build healthy habits, and visualize their eating patterns over time — without clutter or overwhelm.
 
@@ -127,5 +126,3 @@ A clean, minimalist diet tracker that helps users effortlessly log their meals, 
 * AI-based meal suggestions based on history
 * Personalized nutrition goals
 * Integration with wearables
-
----
