@@ -110,7 +110,9 @@ export type Database = {
           fats: number
           id: string
           meal_date: string
+          meal_type: string
           name: string
+          portion_size: number | null
           protein: number
           user_id: string
         }
@@ -121,7 +123,9 @@ export type Database = {
           fats?: number
           id?: string
           meal_date?: string
+          meal_type: string
           name: string
+          portion_size?: number | null
           protein?: number
           user_id: string
         }
@@ -132,7 +136,9 @@ export type Database = {
           fats?: number
           id?: string
           meal_date?: string
+          meal_type?: string
           name?: string
+          portion_size?: number | null
           protein?: number
           user_id?: string
         }

@@ -79,9 +79,9 @@ const Index = () => {
         const transformedMeals = meals?.map((meal) => ({
           id: meal.id,
           foodName: meal.name,
-          mealType: 'meal', // Since we don't store meal type in DB yet, use default
+          mealType: meal.meal_type || 'meal', // Use stored meal_type
           servings: 1,
-          servingSize: '100g', // Default serving size
+          servingSize: `${meal.portion_size || 100}g`, // Use stored portion_size
           calories: meal.calories,
           protein: meal.protein,
           carbs: meal.carbs,

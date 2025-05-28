@@ -31,7 +31,7 @@ export const FoodLogger = ({ onAddMeal }: FoodLoggerProps) => {
     setIsLoading(true);
     
     try {
-      // Save to database
+      // Save to database with meal_type and portion_size
       const { data, error } = await supabase
         .from('user_meals')
         .insert({
@@ -41,6 +41,8 @@ export const FoodLogger = ({ onAddMeal }: FoodLoggerProps) => {
           protein,
           carbs,
           fats,
+          meal_type: mealType,
+          portion_size: portionSize,
           meal_date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
         })
         .select()

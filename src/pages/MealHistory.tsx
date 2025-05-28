@@ -16,6 +16,8 @@ interface MealData {
   protein: number;
   carbs: number;
   fats: number;
+  meal_type: string;
+  portion_size: number;
   created_at: string;
 }
 
@@ -90,6 +92,16 @@ const MealHistory = () => {
       carbs: totals.carbs + meal.carbs,
       fats: totals.fats + meal.fats
     }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
+  };
+
+  const getMealTypeColor = (type: string) => {
+    switch (type) {
+      case 'breakfast': return 'text-amber-600 bg-amber-50';
+      case 'lunch': return 'text-emerald-600 bg-emerald-50';
+      case 'dinner': return 'text-blue-600 bg-blue-50';
+      case 'snack': return 'text-purple-600 bg-purple-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
   };
 
   const totals = getTotalNutrition();
@@ -191,12 +203,20 @@ const MealHistory = () => {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="font-medium text-gray-900">{meal.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {format(new Date(meal.created_at), 'h:mm a')}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getMealTypeColor(meal.meal_type)}`}>
+                              {meal.meal_type}
+                            </span>
+                            <p className="text-xs text-gray-500">
+                              {format(new Date(meal.created_at), 'h:mm a')}
+                            </p>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">{meal.calories} cal</p>
+                          <p className="text-xs text-gray-600">
+                            {meal.portion_size}g
+                          </p>
                         </div>
                       </div>
                       
