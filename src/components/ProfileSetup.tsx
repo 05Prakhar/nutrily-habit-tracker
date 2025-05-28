@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,6 +95,23 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
         .eq('id', user?.id);
 
       if (profileError) throw profileError;
+
+      // Save detailed profile data
+      const { error: userProfileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user?.id,
+          age: parseInt(profileData.age),
+          gender: profileData.gender,
+          height: parseFloat(profileData.height),
+          weight: parseFloat(profileData.weight),
+          activity_level: profileData.activityLevel,
+          goal: profileData.goal,
+          dietary_restrictions: profileData.dietaryRestrictions || null,
+          updated_at: new Date().toISOString()
+        });
+
+      if (userProfileError) throw userProfileError;
 
       // Calculate and save daily goals
       const goals = calculateDailyGoals();
