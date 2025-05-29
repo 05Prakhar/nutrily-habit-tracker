@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,13 @@ export const FoodLogger = ({ onAddMeal }: FoodLoggerProps) => {
   const [carbs, setCarbs] = useState(0);
   const [fats, setFats] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-calculate calories based on macronutrients
+  useEffect(() => {
+    // Standard calorie conversion: 4 cal/g protein, 4 cal/g carbs, 9 cal/g fats
+    const calculatedCalories = Math.round((protein * 4) + (carbs * 4) + (fats * 9));
+    setCalories(calculatedCalories);
+  }, [protein, carbs, fats]);
 
   const handleAddMeal = async () => {
     if (!foodName.trim() || !user) return;
@@ -138,14 +145,16 @@ export const FoodLogger = ({ onAddMeal }: FoodLoggerProps) => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <Label htmlFor="calories">Calories</Label>
+            <Label htmlFor="calories">Calories (auto-calculated)</Label>
             <Input
               id="calories"
               type="number"
               min="0"
               value={calories}
-              onChange={(e) => setCalories(parseInt(e.target.value) || 0)}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
             />
+            <p className="text-xs text-gray-500 mt-1">Based on macros: 4 cal/g protein & carbs, 9 cal/g fats</p>
           </div>
           <div>
             <Label htmlFor="protein">Protein (g)</Label>
