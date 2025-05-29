@@ -54,14 +54,20 @@ const MealHistory = () => {
     loadMealDates();
   }, [user]);
 
-  // Load meals for selected date
+  // Load meals for selected date - Fixed to properly handle date changes
   useEffect(() => {
     const loadMealsForDate = async () => {
       if (!user || !selectedDate) return;
 
+      console.log('Loading meals for date:', selectedDate);
       setLoading(true);
+      setMealsForDate([]); // Clear previous meals immediately
+      
       try {
-        const dateString = selectedDate.toISOString().split('T')[0];
+        // Format date properly to ensure consistent comparison
+        const dateString = format(selectedDate, 'yyyy-MM-dd');
+        console.log('Formatted date string:', dateString);
+        
         const { data: meals, error } = await supabase
           .from('user_meals')
           .select('*')
@@ -74,6 +80,7 @@ const MealHistory = () => {
           return;
         }
 
+        console.log('Loaded meals:', meals);
         setMealsForDate(meals || []);
       } catch (error) {
         console.error('Error loading meals for date:', error);
@@ -83,7 +90,7 @@ const MealHistory = () => {
     };
 
     loadMealsForDate();
-  }, [user, selectedDate]);
+  }, [user, selectedDate]); // This dependency array ensures it runs when selectedDate changes
 
   const getTotalNutrition = () => {
     return mealsForDate.reduce((totals, meal) => ({
@@ -101,6 +108,14 @@ const MealHistory = () => {
       case 'dinner': return 'text-blue-600 bg-blue-50';
       case 'snack': return 'text-purple-600 bg-purple-50';
       default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  // Handle date selection with proper state update
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      console.log('Date selected:', date);
+      setSelectedDate(date);
     }
   };
 
@@ -137,7 +152,7 @@ const MealHistory = () => {
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
+              onSelect={handleDateSelect}
               className="rounded-md border"
               modifiers={{
                 hasMeals: mealDates
