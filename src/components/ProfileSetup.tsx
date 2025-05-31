@@ -87,7 +87,7 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
     try {
       // Update user profile
       const { error: profileError } = await supabase
-        .from('profiles')
+        .from('users')
         .update({
           full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
           updated_at: new Date().toISOString()
