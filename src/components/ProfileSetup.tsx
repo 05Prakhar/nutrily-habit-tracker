@@ -83,9 +83,14 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
   };
 
   const handleSubmit = async () => {
+    console.log('Starting profile setup submission...');
+    console.log('User ID:', user?.id);
+    console.log('Profile data:', profileData);
+    
     setLoading(true);
     try {
       // Update user profile
+      console.log('Updating user profile...');
       const { error: profileError } = await supabase
         .from('users')
         .update({
@@ -94,9 +99,14 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
         })
         .eq('id', user?.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        throw profileError;
+      }
+      console.log('User profile updated successfully');
 
       // Save detailed profile data
+      console.log('Saving detailed profile data...');
       const { error: userProfileError } = await supabase
         .from('user_profiles')
         .upsert({
@@ -111,10 +121,17 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
           updated_at: new Date().toISOString()
         });
 
-      if (userProfileError) throw userProfileError;
+      if (userProfileError) {
+        console.error('User profile error:', userProfileError);
+        throw userProfileError;
+      }
+      console.log('User profile data saved successfully');
 
       // Calculate and save daily goals
+      console.log('Calculating and saving daily goals...');
       const goals = calculateDailyGoals();
+      console.log('Calculated goals:', goals);
+      
       const { error: goalsError } = await supabase
         .from('user_daily_goals')
         .upsert({
@@ -126,15 +143,21 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
           updated_at: new Date().toISOString()
         });
 
-      if (goalsError) throw goalsError;
+      if (goalsError) {
+        console.error('Goals save error:', goalsError);
+        throw goalsError;
+      }
+      console.log('Daily goals saved successfully');
 
       toast({
         title: "Profile setup complete!",
         description: "Your nutrition goals have been calculated and saved.",
       });
 
+      console.log('Profile setup completed successfully');
       onComplete();
     } catch (error: any) {
+      console.error('Profile setup error:', error);
       toast({
         title: "Error",
         description: error.message,
