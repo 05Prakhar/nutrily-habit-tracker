@@ -89,21 +89,51 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
     
     setLoading(true);
     try {
-      // Update user profile
-      console.log('Updating user profile...');
-      const { error: profileError } = await supabase
+      // First, check if users table exists and only update if it does
+      console.log('Checking users table...');
+      const { data: existingUser, error: userCheckError } = await supabase
         .from('users')
-        .update({
-          full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user?.id);
+        .select('id')
+        .eq('id', user?.id)
+        .maybeSingle();
 
-      if (profileError) {
-        console.error('Profile update error:', profileError);
-        throw profileError;
+      if (userCheckError && userCheckError.code !== 'PGRST116') {
+        console.error('Error checking users table:', userCheckError);
+      } else if (existingUser) {
+        // Update user profile only if the record exists
+        console.log('Updating user profile...');
+        const { error: profileError } = await supabase
+          .from('users')
+          .update({
+            full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user?.id);
+
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+        } else {
+          console.log('User profile updated successfully');
+        }
+      } else {
+        // Insert new user record if it doesn't exist
+        console.log('Creating new user record...');
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: user?.id,
+            email: user?.email,
+            full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('User insert error:', insertError);
+        } else {
+          console.log('User record created successfully');
+        }
       }
-      console.log('User profile updated successfully');
 
       // Save detailed profile data
       console.log('Saving detailed profile data...');
@@ -160,7 +190,7 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
       console.error('Profile setup error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during profile setup. Please try again.",
         variant: "destructive",
       });
     } finally {
