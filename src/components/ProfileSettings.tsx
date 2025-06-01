@@ -63,7 +63,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
           throw error;
@@ -209,8 +209,13 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
 
     setLoading(true);
     try {
+      console.log('Saving profile settings for user:', user?.id);
+      
       // Update/insert user profile if profile data is provided
       if (profileData.age && profileData.gender && profileData.height && profileData.weight) {
+        console.log('Upserting user profile data...');
+        
+        // Use upsert with proper conflict resolution
         const { error: profileError } = await supabase
           .from('user_profiles')
           .upsert({
@@ -223,12 +228,20 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
             goal: profileData.goal,
             dietary_restrictions: profileData.dietaryRestrictions || null,
             updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile upsert error:', profileError);
+          throw profileError;
+        }
+        console.log('Profile data saved successfully');
       }
 
-      // Update daily goals with current timestamp
+      // Update daily goals with proper conflict resolution
+      console.log('Upserting daily goals...');
       const { error: goalsError } = await supabase
         .from('user_daily_goals')
         .upsert({
@@ -238,9 +251,16 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
           carbs: targets.carbs,
           fats: targets.fats,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         });
 
-      if (goalsError) throw goalsError;
+      if (goalsError) {
+        console.error('Goals upsert error:', goalsError);
+        throw goalsError;
+      }
+      console.log('Daily goals saved successfully');
 
       // Update local state
       onGoalsUpdated(targets);
@@ -252,9 +272,10 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
 
       setOpen(false);
     } catch (error: any) {
+      console.error('Settings save error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred while saving your settings. Please try again.",
         variant: "destructive",
       });
     } finally {
