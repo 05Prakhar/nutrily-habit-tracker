@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,10 +80,9 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
           });
         }
       } catch (error: any) {
-        console.error('Error loading profile:', error);
         toast({
           title: "Error loading profile",
-          description: "Could not load your existing profile data.",
+          description: "Could not load your existing profile data. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -93,7 +91,7 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
     };
 
     loadProfileData();
-  }, [open, user]);
+  }, [open, user, toast]);
 
   const updateProfileData = (field: string, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
@@ -207,19 +205,24 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to save profile settings.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
+    
     try {
-      console.log('Saving profile settings for user:', user?.id);
-      
-      // Update/insert user profile if profile data is provided
+      // Log profile changes to the new table
       if (profileData.age && profileData.gender && profileData.height && profileData.weight) {
-        console.log('Upserting user profile data...');
-        
-        // Use upsert with proper conflict resolution
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .upsert({
-            user_id: user?.id,
+        const { error: profileChangeError } = await supabase
+          .from('user_profile_changes')
+          .insert({
+            user_id: user.id,
             age: parseInt(profileData.age),
             gender: profileData.gender,
             height: parseFloat(profileData.height),
@@ -227,25 +230,19 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
             activity_level: profileData.activityLevel,
             goal: profileData.goal,
             dietary_restrictions: profileData.dietaryRestrictions || null,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
+            change_reason: 'manual_update'
           });
 
-        if (profileError) {
-          console.error('Profile upsert error:', profileError);
-          throw profileError;
+        if (profileChangeError) {
+          throw new Error(`Failed to log profile changes: ${profileChangeError.message}`);
         }
-        console.log('Profile data saved successfully');
       }
 
-      // Update daily goals with proper conflict resolution
-      console.log('Upserting daily goals...');
+      // Update daily goals
       const { error: goalsError } = await supabase
         .from('user_daily_goals')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           calories: targets.calories,
           protein: targets.protein,
           carbs: targets.carbs,
@@ -257,22 +254,19 @@ export const ProfileSettings = ({ dailyGoals, onGoalsUpdated }: ProfileSettingsP
         });
 
       if (goalsError) {
-        console.error('Goals upsert error:', goalsError);
-        throw goalsError;
+        throw new Error(`Failed to update daily goals: ${goalsError.message}`);
       }
-      console.log('Daily goals saved successfully');
 
       // Update local state
       onGoalsUpdated(targets);
 
       toast({
         title: "Settings updated!",
-        description: "Your profile and daily targets have been saved successfully.",
+        description: "Your profile changes have been logged and daily targets have been saved successfully.",
       });
 
       setOpen(false);
     } catch (error: any) {
-      console.error('Settings save error:', error);
       toast({
         title: "Error",
         description: error.message || "An error occurred while saving your settings. Please try again.",
